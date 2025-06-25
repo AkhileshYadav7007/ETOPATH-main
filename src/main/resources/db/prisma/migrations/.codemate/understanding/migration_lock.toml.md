@@ -1,0 +1,3 @@
+# High-Level Documentation
+
+This file is a configuration file, intended to be tracked in version control systems such as Git. It defines the type of database provider to be used by the application or service. In this case, the provider is set to use a PostgreSQL database (`provider = "postgresql"`). Manual editing of this file is discouraged to maintain consistency and prevent configuration issues. Instead, it should be managed through automated tools or deployment scripts.

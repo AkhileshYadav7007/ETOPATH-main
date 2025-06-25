@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models based on your SQL schema
+model User {
+  id                BigInt              @id @default(autoincrement())
+  firstName         String              @map("first_name") @db.VarChar(50)
+  lastName          String              @map("last_name") @db.VarChar(50)
+  email             String              @unique @db.VarChar(100)
+  password          String              @db.VarChar(100)
+  phone             String              @db.VarChar(15)
+  whatsapp          String?             @db.VarChar(15)
+  address           String
+  city              String              @db.VarChar(50)
+  state             String              @db.VarChar(50)
+  pincode           String              @db.VarChar(10)
+  role              String              @default("USER") @db.VarChar(20)
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  orders            Order[]
+  enrollments       Enrollment[]
+  businessInfo      UserBusinessInfo?
+
+  @@map("users")
+}
+
+model Course {
+  id                String              @id @db.VarChar(50)
+  name              String              @db.VarChar(100)
+  description       String?
+  duration          String              @db.VarChar(50)
+  fee               Decimal             @db.Decimal(10, 2)
+  originalPrice     Decimal             @map("original_price") @db.Decimal(10, 2)
+  level             String              @db.VarChar(20)
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  features          CourseFeature[]
+  marketplaces      CourseMarketplace[]
+  orders            Order[]
+  enrollments       Enrollment[]
+
+  @@map("courses")
+}
+
+model CourseFeature {
+  id                BigInt              @id @default(autoincrement())
+  courseId          String              @map("course_id") @db.VarChar(50)
+  feature           String
+  course            Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_features")
+}
+
+model CourseMarketplace {
+  id                BigInt              @id @default(autoincrement())
+  courseId          String              @map("course_id") @db.VarChar(50)
+  marketplace       String              @db.VarChar(50)
+  course            Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_marketplaces")
+}
+
+model Order {
+  id                BigInt              @id @default(autoincrement())
+  orderNumber       String              @unique @map("order_number") @db.VarChar(50)
+  userId            BigInt              @map("user_id")
+  courseId          String              @map("course_id") @db.VarChar(50)
+  amount            Decimal             @db.Decimal(10, 2)
+  currency          String              @default("INR") @db.VarChar(3)
+  status            String              @default("CREATED") @db.VarChar(20)
+  razorpayOrderId   String?             @map("razorpay_order_id") @db.VarChar(100)
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  user              User                @relation(fields: [userId], references: [id])
+  course            Course              @relation(fields: [courseId], references: [id])
+  payments          Payment[]
+  enrollments       Enrollment[]
+
+  @@map("orders")
+}
+
+model Payment {
+  id                BigInt              @id @default(autoincrement())
+  orderId           BigInt              @map("order_id")
+  razorpayPaymentId String?             @map("razorpay_payment_id") @db.VarChar(100)
+  razorpaySignature String?             @map("razorpay_signature") @db.VarChar(255)
+  amount            Decimal             @db.Decimal(10, 2)
+  status            String              @db.VarChar(20)
+  paymentMethod     String?             @map("payment_method") @db.VarChar(50)
+  paymentDate       DateTime?           @map("payment_date")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  order             Order               @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Enrollment {
+  id                BigInt              @id @default(autoincrement())
+  userId            BigInt              @map("user_id")
+  courseId          String              @map("course_id") @db.VarChar(50)
+  orderId           BigInt              @map("order_id")
+  status            String              @default("ACTIVE") @db.VarChar(20)
+  enrollmentDate    DateTime            @default(now()) @map("enrollment_date")
+  completionDate    DateTime?           @map("completion_date")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  user              User                @relation(fields: [userId], references: [id])
+  course            Course              @relation(fields: [courseId], references: [id])
+  order             Order               @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model UserBusinessInfo {
+  id                BigInt              @id @default(autoincrement())
+  userId            BigInt              @unique @map("user_id")
+  experienceLevel   String?             @map("experience_level") @db.VarChar(50)
+  currentBusiness   String?             @map("current_business")
+  goals             String?
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @default(now()) @map("updated_at")
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_business_info")
+}
